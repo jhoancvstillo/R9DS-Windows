@@ -73,7 +73,22 @@
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     1U
 /*---------- -----------*/
-#define USBD_SELF_POWERED     1U
+#define USBD_SELF_POWERED     0U
+/*---------- -----------*/
+#define USBD_CUSTOMHID_OUTREPORT_BUF_SIZE     2U
+/*---------- -----------*/
+#define USBD_CUSTOM_HID_REPORT_DESC_SIZE     28U
+/*---------- -----------*/
+#define CUSTOM_HID_HS_BINTERVAL     0x5U
+/*---------- -----------*/
+/*---------- -----------*/
+
+/* #define USBD_CUSTOMHID_REPORT_DESC_SIZE_ENABLED */
+/* #define USBD_CUSTOMHID_CTRL_REQ_GET_REPORT_ENABLED */
+/* #define USBD_CUSTOMHID_OUT_PREPARE_RECEIVE_DISABLED */
+/* #define USBD_CUSTOMHID_EP0_OUT_PREPARE_RECEIVE_DISABLED */
+/* #define USBD_CUSTOMHID_CTRL_REQ_COMPLETE_CALLBACK_ENABLED */
+/* #define USBD_CUSTOMHID_REPORT_BUFFER_EVENT_ENABLED */
 
 /****************************************/
 /* #define for FS and HS identification */

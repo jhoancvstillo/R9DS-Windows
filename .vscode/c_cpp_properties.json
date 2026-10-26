@@ -1,0 +1,42 @@
+{
+    "configurations": [
+        {
+            "name": "STM32H723",
+            "compilerPath": "C:\\ST\\STM32CubeIDE_2.2.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740\\tools\\bin\\arm-none-eabi-gcc.exe",
+            "compilerArgs": [
+                "-mcpu=cortex-m7",
+                "-mfpu=fpv5-d16",
+                "-mfloat-abi=hard",
+                "-mthumb"
+            ],
+            "cStandard": "gnu11",
+            "intelliSenseMode": "windows-gcc-arm",
+            "includePath": [
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/STM32H7xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32H7xx/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/USB_DEVICE/App",
+                "${workspaceFolder}/USB_DEVICE/Target",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Class/CustomHID/Inc"
+            ],
+            "defines": [
+                "DEBUG",
+                "USE_PWR_LDO_SUPPLY",
+                "USE_HAL_DRIVER",
+                "STM32H723xx"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/Core",
+                    "${workspaceFolder}/Drivers",
+                    "${workspaceFolder}/USB_DEVICE",
+                    "${workspaceFolder}/Middlewares"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}

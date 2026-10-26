@@ -19,10 +19,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "usbd_cdc_if.h"
-#include "usbd_cdc.h"
+#include "usbd_customhid.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -46,7 +46,15 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+extern USBD_HandleTypeDef hUsbDeviceHS;
 
+static uint8_t reporteHID[8] =
+{
+    0x00, 0x80,   // X  = 32768
+    0x00, 0x80,   // Y  = 32768
+    0x00, 0x80,   // Z  = 32768
+    0x00, 0x80    // Rz = 32768
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -122,6 +130,8 @@ int main(void)
   uint32_t erroresUART = 0;
   uint32_t overrunsUART = 0;
   uint8_t tramaRaw[25] = {0};
+
+  uint32_t ultimoHID = 0;
 
 
   // Señal de arranque: cambiar el LED dos veces
@@ -267,119 +277,37 @@ int main(void)
 
 	  }
 
+    
+uint32_t tiempoHID = HAL_GetTick();
 
-	  uint32_t tiempoUSB = HAL_GetTick();
+if ((uint32_t)(tiempoHID - ultimoHID) >= 20U)
+{
+    ultimoHID = tiempoHID;
 
-	  if ((uint32_t)(tiempoUSB - ultimoEnvioUSB) >= 500U)
-	  {
-	      ultimoEnvioUSB = tiempoUSB;
-
-
-
-	      int n = snprintf(
-	          (char *)mensajeUSB,
-	          sizeof(mensajeUSB),
-
-	          "OK=%lu\r\n"
-	          "PAUSAS=%lu\r\n"
-	          "RECH=%lu\r\n"
-	          "ERRORES_UART=%lu\r\n"
-	          "OVERRUN=%lu\r\n"
-	          "FS=%u\r\n"
-	          "LOST=%u\r\n"
-	          "REC=%u\r\n"
-	          "\r\n"
-	          "CH1=%u\r\n"
-	          "CH2=%u\r\n"
-	          "CH3=%u\r\n"
-	          "CH4=%u\r\n"
-	          "CH5=%u\r\n"
-	          "CH6=%u\r\n"
-	          "CH7=%u\r\n"
-	          "CH8=%u\r\n"
-	          "CH9=%u\r\n"
-	          "CH10=%u\r\n"
-	          "CH11=%u\r\n"
-	          "CH12=%u\r\n"
-	          "CH13=%u\r\n"
-	          "CH14=%u\r\n"
-	          "CH15=%u\r\n"
-	          "CH16=%u\r\n"
-			  "RAW="
-	          "--------------------\r\n",
-
-	          (unsigned long)tramasValidas,
-	          (unsigned long)pausasDetectadas,
-	          (unsigned long)tramasRechazadas,
-	          (unsigned long)erroresUART,
-	          (unsigned long)overrunsUART,
-
-	          (unsigned)failsafe_flag,
-	          (unsigned)lost_flag,
-	          (unsigned)comunicacionReciente,
-
-	          (unsigned)canales[0],
-	          (unsigned)canales[1],
-	          (unsigned)canales[2],
-	          (unsigned)canales[3],
-	          (unsigned)canales[4],
-	          (unsigned)canales[5],
-	          (unsigned)canales[6],
-	          (unsigned)canales[7],
-	          (unsigned)canales[8],
-	          (unsigned)canales[9],
-	          (unsigned)canales[10],
-	          (unsigned)canales[11],
-	          (unsigned)canales[12],
-	          (unsigned)canales[13],
-	          (unsigned)canales[14],
-	          (unsigned)canales[15]
-	      );
+    if (hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED)
+    {
+    	if (((tiempoHID / 1000U) % 2U) == 0U)
+    	{
+    	    reporteHID[0] = 0x00;
+    	    reporteHID[1] = 0x00;
+    	}
+    	else
+    	{
+    	    reporteHID[0] = 0xFF;
+    	    reporteHID[1] = 0xFF;
+    	}
+        USBD_CUSTOM_HID_SendReport(
+            &hUsbDeviceHS,
+            reporteHID,
+            sizeof(reporteHID)
+        );
+    }
+}
 
 
 
 
-	      if (n > 0 && n < (int)sizeof(mensajeUSB))
-	      {
-	          // Agregar los 25 bytes RAW en hexadecimal
-	          if (tramasValidas > 0U)
-	          {
-	              for (uint8_t i = 0; i < 25U; i++)
-	              {
-	                  size_t espacio = sizeof(mensajeUSB) - (size_t)n;
-
-	                  int escritos = snprintf(
-	                      (char *)mensajeUSB + n,
-	                      espacio,
-	                      "%02X%s",
-	                      (unsigned)tramaRaw[i],
-	                      (i == 24U) ? "\r\n\r\n" : " "
-	                  );
-
-	                  if (escritos < 0 || (size_t)escritos >= espacio)
-	                  {
-	                      n = -1;
-	                      break;
-	                  }
-
-	                  n += escritos;
-	              }
-	          }
-
-	          // Transmitir únicamente si el mensaje cabe
-	          if (n > 0)
-	          {
-	              uint8_t resultado =
-	                  CDC_Transmit_HS(mensajeUSB, (uint16_t)n);
-
-	              if (resultado == USBD_BUSY)
-	              {
-	                  // Transmisión no aceptada: USB ocupado
-	              }
-	          }
-	      }
-
-	  }
+	  
   }
 
 
