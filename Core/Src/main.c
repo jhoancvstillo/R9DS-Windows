@@ -278,31 +278,82 @@ int main(void)
 	  }
 
     
-uint32_t tiempoHID = HAL_GetTick();
 
-if ((uint32_t)(tiempoHID - ultimoHID) >= 20U)
-{
-    ultimoHID = tiempoHID;
+	  uint32_t tiempoHID = HAL_GetTick();
 
-    if (hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED)
-    {
-    	if (((tiempoHID / 1000U) % 2U) == 0U)
-    	{
-    	    reporteHID[0] = 0x00;
-    	    reporteHID[1] = 0x00;
-    	}
-    	else
-    	{
-    	    reporteHID[0] = 0xFF;
-    	    reporteHID[1] = 0xFF;
-    	}
-        USBD_CUSTOM_HID_SendReport(
-            &hUsbDeviceHS,
-            reporteHID,
-            sizeof(reporteHID)
-        );
-    }
-}
+	  if ((uint32_t)(tiempoHID - ultimoHID) >= 20U)
+	  {
+	      ultimoHID = tiempoHID;
+
+	      if (hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED)
+	      {
+	          uint8_t datosValidos =
+	              (tramasValidas > 0U) &&
+	              ((uint32_t)(tiempoHID - ultimaTrama) < 100U) &&
+	              (failsafe_flag == 0U) &&
+	              (lost_flag == 0U);
+
+	          // X, Y, Z, Rz
+	          // Posiciones seguras si perdemos la señal.
+	          uint16_t ejes[4] = {
+	              32768U, // X: centro
+	              32768U, // Y: centro
+	              0U,     // Z: throttle mínimo
+	              32768U  // Rz: centro
+	          };
+
+	          if (datosValidos)
+	          {
+	              for (uint8_t i = 0; i < 4U; i++)
+	              {
+	                  uint16_t sbus = canales[i];
+
+	                  // Limitar al rango SBUS esperado
+	                  if (sbus < 200U)
+	                  {
+	                      sbus = 200U;
+	                  }
+
+	                  if (sbus > 1800U)
+	                  {
+	                      sbus = 1800U;
+	                  }
+
+	                  // Convertir 200..1800 a 0..65535
+	                  uint16_t valorHID = (uint16_t)(
+	                      ((uint32_t)(sbus - 200U) * 65535U)
+	                      / 1600U
+	                  );
+
+	                  // Invertir CH3 (throttle)
+	                  if (i == 2U)
+	                  {
+	                      valorHID = (uint16_t)(65535U - valorHID);
+	                  }
+
+	                  ejes[i] = valorHID;
+	              }
+	          }
+
+	          // Construir el reporte HID de 8 bytes
+	          for (uint8_t i = 0; i < 4U; i++)
+	          {
+	              reporteHID[2U * i] =
+	                  (uint8_t)(ejes[i] & 0xFFU);
+
+	              reporteHID[2U * i + 1U] =
+	                  (uint8_t)(ejes[i] >> 8U);
+	          }
+
+	          // Enviar los cuatro ejes a Windows
+	          USBD_CUSTOM_HID_SendReport(
+	              &hUsbDeviceHS,
+	              reporteHID,
+	              sizeof(reporteHID)
+	          );
+	      }
+	  }
+
 
 
 
